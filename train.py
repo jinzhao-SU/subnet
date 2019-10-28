@@ -10,9 +10,9 @@ from torch.optim import lr_scheduler
 from model import PreTrain
 from dataloader import UAVDatasetTuple
 from utils import draw_roc_curve, calculate_precision_recall, visualize_sum_testing_result, visualize_lstm_testing_result
+from correlation import Correlation
 
-
-os.environ["CUDA_VISIBLE_DEVICES"]="3"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 
 def train(model, train_loader, device, optimizer, criterion, epoch, weight):
@@ -77,9 +77,12 @@ def val(model, test_loader, device, criterion, epoch, weight):
             visualize_sum_testing_result(prediction, label.data, batch_idx, epoch)
 
     sum_running_loss = sum_running_loss / len(test_loader.dataset)
+    
+    prediction_output = prediction.cpu().detach().numpy()
+    label_output = label.cpu().detach().numpy()
 
     print('\nTesting phase: epoch: {} Loss: {:.4f}\n'.format(epoch, sum_running_loss))
-    return sum_running_loss
+    return sum_running_loss, prediction_output, label_output
 
 
 def save_model(checkpoint_dir, model_checkpoint_name, model):
@@ -150,24 +153,32 @@ def main():
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=30,drop_last=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=30, drop_last=True)
 
+    cor = Correlation()
+    
     if args.eval_only:
-        loss = val(model_ft, test_loader, device, criterion, 0, weight)
+        loss, prediction_output, label_output = val(model_ft, test_loader, device, criterion, 0, weight)
         print('\nTesting phase: epoch: {} Loss: {:.4f}\n'.format(0, loss))
+        cor.corrcoef(prediction_output, label_output, ".", "correlation_test.png")
         return True
 
     best_loss = np.inf
+    coef = 0.0
     print("start epoch")
     for epoch in range(args.num_epochs):
         print('Epoch {}/{}'.format(epoch, args.num_epochs - 1))
         print('-' * 80)
         exp_lr_scheduler.step()
         train(model_ft, train_loader, device, optimizer_ft, criterion, epoch, weight)
-        loss = val(model_ft, test_loader, device, criterion, epoch, weight)
+        loss, prediction_output, label_output = val(model_ft, test_loader, device, criterion, epoch, weight)
         if loss < best_loss:
             save_model(checkpoint_dir=args.checkpoint_dir,
                        model_checkpoint_name=args.model_checkpoint_name + '_' + str(loss),
                        model=model_ft)
             best_loss = loss
+            cor_path = args.checkpoint_dir.replace("check_point", "testing_result")
+            cor_path = os.path.join(cor_path, "epoch_" + str(epoch))
+            coef = cor.corrcoef(prediction_output, label_output, cor_path, "correlation_{0}.png".format(epoch))
+    print('correlation coefficient : {0}\n'.format(coef))
 
 if __name__ == '__main__':
     main()
