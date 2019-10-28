@@ -56,8 +56,6 @@ def train(model, train_loader, device, optimizer, criterion, epoch, weight):
 def val(model, test_loader, device, criterion, epoch, weight):
     model.eval()
     sum_running_loss = 0.0
-    num_images = 0
-    loss = 0.0
 
     with torch.no_grad():
         for batch_idx, data in enumerate(tqdm(test_loader)):
@@ -74,15 +72,14 @@ def val(model, test_loader, device, criterion, epoch, weight):
 
             # accumulate loss
             sum_running_loss += loss.item() * task.size(0)
-            num_images += task.size(0)
 
             # visualize the sum testing result
             visualize_sum_testing_result(prediction, label.data, batch_idx, epoch)
 
-            sum_test_loss = sum_running_loss / len(test_loader.dataset)
-            loss = sum_test_loss
-            print('\nTesting phase: epoch: {} Loss: {:.4f}\n'.format(epoch, sum_test_loss))
-            return loss
+    sum_running_loss = sum_running_loss / len(test_loader.dataset)
+
+    print('\nTesting phase: epoch: {} Loss: {:.4f}\n'.format(epoch, sum_running_loss))
+    return sum_running_loss
 
 
 def save_model(checkpoint_dir, model_checkpoint_name, model):
