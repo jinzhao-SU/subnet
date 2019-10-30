@@ -178,7 +178,7 @@ def main():
             cor_path = args.checkpoint_dir.replace("check_point", "testing_result")
             cor_path = os.path.join(cor_path, "epoch_" + str(epoch))
             coef = cor.corrcoef(prediction_output, label_output, cor_path, "correlation_{0}.png".format(epoch))
-    print('correlation coefficient : {0}\n'.format(coef))
+        print('correlation coefficient : {0}\n'.format(coef))
 
 if __name__ == '__main__':
     main()
