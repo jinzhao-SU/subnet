@@ -8,7 +8,7 @@ class Correlation:
     def __init__(self):
         # save correlation in data file
         # path = os.path.split(path)[0]
-        pass
+        self.best = 0.0
     
     def bn(self, a):
         for i in range(len(a)):
@@ -36,6 +36,9 @@ class Correlation:
         r = np.corrcoef(x, y_true)
         r = r[0,1]
         # print('correlation coefficient : \n', r)
+        if r > self.best:
+            self.best = r
+        r = self.best
         y_pre = x*r
 
         plt.figure()
