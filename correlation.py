@@ -10,12 +10,12 @@ class Correlation:
         # path = os.path.split(path)[0]
         self.best = 0.0
     
-    def bn(self, a):
+    def bn(self, a, maxVal, minVal):
         for i in range(len(a)):
-            a[i] = (a[i] - np.min(a[i])) / (np.max(a[i]) - np.min(a[i]))
+            a[i] = (a[i] - minVal) / (maxVal - minVal)
         return a
 
-    def corrcoef(self, prediction, label, path, name = "correlation.png"):
+    def corrcoef(self, prediction, label, path = '.', name = "correlation.png"):
         self.path = os.path.join(path, name)
         # prediction = np.load(a)
         # label = np.load(b)
@@ -25,8 +25,8 @@ class Correlation:
         # prediction = prediction[:40]
         # label = label[:40]
 
-        self.bn(prediction)
-        self.bn(label)
+        # self.bn(prediction)
+        # self.bn(label)
 
         # print(prediction.shape)
         # print(label.shape)
@@ -40,6 +40,18 @@ class Correlation:
             self.best = r
         r = self.best
         y_pre = x*r
+        
+        maxVal = 0.0
+        maxVal = max(maxVal, np.max(x))
+        maxVal = max(maxVal, np.max(y_pre))
+        maxVal = max(maxVal, np.max(y_true))
+        minVal = 1.0
+        minVal = min(minVal, np.min(x))
+        minVal = min(minVal, np.min(y_pre))
+        minVal = min(minVal, np.min(y_true))
+        self.bn(x, maxVal, minVal)
+        self.bn(y_pre, maxVal, minVal)
+        self.bn(y_true, maxVal, minVal)
 
         plt.figure()
         palette = plt.get_cmap('Set1')
@@ -55,3 +67,9 @@ class Correlation:
         return r
 
         # print(a/b)'''
+
+# if __name__ == '__main__':
+#     prediction = np.load('../UAV_POSTPROCESS/tmpdata/lstmdata.npy')
+#     label = np.load('../UAV_POSTPROCESS/tmpdata/y_test.npy')
+#     c = Correlation();
+#     c.corrcoef(prediction, label);
